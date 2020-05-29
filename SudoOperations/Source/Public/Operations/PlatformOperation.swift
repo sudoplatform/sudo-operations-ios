@@ -171,29 +171,6 @@ open class PlatformOperation: Operation {
         state = .pending
     }
 
-    /// Evaluates the custom conditions of an operation.
-    ///
-    /// These conditions are evaluated right before the operation is executed. If the method returns false,
-    /// the operation will not be executed and instead transition directly from `ready` to `finished`.
-    ///
-    /// This is separate from `PlatformOperationCondition`, which are intended for runtime conditions via consumers.
-    /// This method should be used to define internal behaviour to the class.
-    ///
-    /// By default, if not overriden, this method will return false if any dependencies have
-    /// caused an error.
-    ///
-    /// - Returns: `true` if all custom conditions are met.
-    open func evaluateCustomConditions() -> Bool {
-        let containsErrors = dependencies.contains(where: {
-            guard let op = $0 as? PlatformOperation else {
-                return false
-            }
-            return !op.errors.isEmpty
-        })
-
-        return !containsErrors
-    }
-
     /// Executes the operation. Subclasses must override this method.
     ///
     /// When subclassing, ensure that `finish()` is called somehow to avoid definite deadlock.
@@ -289,25 +266,16 @@ open class PlatformOperation: Operation {
 
     public override final func main() {
         assert(state == .ready, "This operation must be performed on an operation queue.")
-
         guard errors.isEmpty, !isCancelled else {
             finish()
             return
         }
-
         self.startTime = Date()
         logger.info("\(type(of: self)) started")
-
-        guard evaluateCustomConditions() else {
-            finishWithError(PlatformOperationErrors.conditionFailed)
-            return
-        }
         state = .executing
-
         observers.forEach {
             $0.operationDidStart(operation: self)
         }
-
         execute()
     }
 
