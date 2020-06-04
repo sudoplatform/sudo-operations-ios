@@ -23,10 +23,10 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
     open var result: Query.Data?
 
     /// Query performed by the operation.
-    private let query: Query
+    public let query: Query
 
     /// Cache Policy of the operation.
-    private let cachePolicy: CachePolicy
+    public let cachePolicy: CachePolicy
 
     /// AppSync client instance to perform the query.
     private unowned let appSyncClient: AWSAppSyncClient

@@ -29,7 +29,7 @@ open class PlatformMutationOperation<Mutation: GraphQLMutation>: PlatformOperati
     open var result: Mutation.Data?
 
     /// Mutation performed by the operation.
-    private let mutation: Mutation
+    public let mutation: Mutation
 
     /// AppSync client instance to perform the mutation, as well as optimistic cleanup.
     private unowned let appSyncClient: AWSAppSyncClient
