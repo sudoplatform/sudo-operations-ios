@@ -32,16 +32,12 @@ open class PlatformOperation: Operation {
 
     /// State of a Platform Operation.
     /// - initialized: Initial state - automatically set when creating a new `PlatformOperation`.
-    /// - pending: Ready to begin evaluating its internal conditions.
-    /// - evaluatingConditions: Evaluating its internal conditions.
-    /// - ready: `PlatformOperation` is ready to execute.
+    /// - pending: Ready to begin execution.
     /// - executing: `PlatformOperation` is currently executing.
     /// - finished: `PlatformOperation` has finished executing and in a completed state.
     public enum State: Int, Comparable {
         case initialized
         case pending
-        case evaluatingConditions
-        case ready
         case executing
         case finished
 
@@ -49,19 +45,10 @@ open class PlatformOperation: Operation {
          /// This is useful for assertion testing to make sure there is not a bug in the code.
         func canTransitionToState(_ target: State) -> Bool {
             switch (self, target) {
-            case (.initialized, .pending):
-                return true
-            case (.pending, .evaluatingConditions):
-                return true
-            case (.pending, .finished):
-                return true
-            case (.evaluatingConditions, .ready):
-                return true
-            case (.ready, .executing):
-                return true
-            case (.ready, .finished):
-                return true
-            case (.executing, .finished):
+            case (.initialized, .pending),
+                 (.pending, .executing),
+                 (.pending, .finished),
+                 (.executing, .finished):
                 return true
             default:
                 return false
@@ -129,25 +116,6 @@ open class PlatformOperation: Operation {
     private(set) public var errors: [Error] = []
 
     // MARK: - Properties: Operation
-
-    override open var isReady: Bool {
-        switch state {
-        case .initialized:
-            return isCancelled
-        case .pending:
-            guard !isCancelled else {
-                return true
-            }
-            if super.isReady {
-                evaluateConditions()
-            }
-            return false
-        case .ready:
-            return super.isReady || isCancelled
-        default:
-            return false
-        }
-    }
 
     override open var isExecuting: Bool {
         return self.state == .executing
@@ -226,7 +194,7 @@ open class PlatformOperation: Operation {
 
     /// Add a condition to the `PlatformOperation`.
     public func addCondition(_ condition: PlatformOperationCondition) {
-        assert(state < .evaluatingConditions, "Cannot modify conditions after execution has begun.")
+        assert(state < .executing, "Cannot modify conditions after execution has begun.")
         conditions.append(condition)
     }
 
@@ -234,17 +202,6 @@ open class PlatformOperation: Operation {
     public func addObserver(_ observer: PlatformOperationObserver) {
         assert(state < .executing, "Cannot modify observers after execution has begun.")
         observers.append(observer)
-    }
-
-    private func evaluateConditions() {
-        assert(state == .pending && !isCancelled, "evaluateConditions() was called out-of-order")
-        state = .evaluatingConditions
-
-        logger.debug("Operation \(id) evaluating conditions.")
-        PlatformOperationConditionEvaluator.evaluate(conditions: conditions, operation: self) { failures in
-            self.errors.append(contentsOf: failures)
-            self.state = .ready
-        }
     }
 
     // MARK: - Methods: Operation
@@ -256,27 +213,33 @@ open class PlatformOperation: Operation {
 
     public override final func start() {
         logger.debug("state: \(state)")
-        super.start()
-
         guard !isCancelled else {
             finish()
             return
         }
+        super.start()
     }
 
     public override final func main() {
-        assert(state == .ready, "This operation must be performed on an operation queue.")
+        assert(state == .pending, "This operation must be performed on an operation queue.")
         guard errors.isEmpty, !isCancelled else {
             finish()
             return
         }
-        self.startTime = Date()
-        logger.info("\(type(of: self)) started")
-        state = .executing
-        observers.forEach {
-            $0.operationDidStart(operation: self)
+        logger.debug("Operation \(id) evaluating conditions.")
+        PlatformOperationConditionEvaluator.evaluate(conditions: conditions, operation: self) { [unowned self] failures in
+            guard failures.isEmpty else {
+                self.finish(failures)
+                return
+            }
+            self.startTime = Date()
+            self.logger.info("\(type(of: self)) started")
+            self.state = .executing
+            self.observers.forEach {
+                $0.operationDidStart(operation: self)
+            }
+            self.execute()
         }
-        execute()
     }
 
 }
