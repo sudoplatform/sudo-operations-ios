@@ -31,11 +31,21 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
     /// AppSync client instance to perform the query.
     private unowned let appSyncClient: AWSAppSyncClient
 
+    /// Function used to perform service context specific error transformation of the mutation result for a service specific error.
+    private let serviceErrorTransformations: [ServiceErrorTransformationCompletion]?
+
     // MARK: - Lifecycle
 
     /// Initialize a PlatformQueryOperation.
-    public init(appSyncClient: AWSAppSyncClient, query: Query, cachePolicy: CachePolicy, logger: Logger) {
+    public init(
+        appSyncClient: AWSAppSyncClient,
+        serviceErrorTransformations: [ServiceErrorTransformationCompletion]? = nil,
+        query: Query,
+        cachePolicy: CachePolicy,
+        logger: Logger
+    ) {
         self.appSyncClient = appSyncClient
+        self.serviceErrorTransformations = serviceErrorTransformations
         self.query = query
         self.cachePolicy = cachePolicy
         super.init(logger: logger)
@@ -54,8 +64,14 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
                 return
             }
             if let errors = queryResult?.errors, let error = errors.first {
-                self.finishWithError(SudoPlatformError(error))
-                return
+                if let serviceErrorTransformations = self.serviceErrorTransformations,
+                    let serviceError = serviceErrorTransformations.compactMap({$0(error)}).first {
+                    self.finishWithError(serviceError)
+                    return
+                } else {
+                    self.finishWithError(SudoPlatformError(error))
+                    return
+                }
             }
 
             self.result = queryResult?.data

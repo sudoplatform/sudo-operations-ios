@@ -10,8 +10,14 @@ import AWSAppSync
 /// Cache policy that determines how data is accessed when performing a `PlatformQueryOperation`.
 public enum CachePolicy {
     /// Use the device cached data.
+    case cacheOnly
+    /// Query and use the data on the server.
+    case remoteOnly
+    /// Use the device cached data.
+    @available(*, deprecated, renamed: "cacheOnly")
     case useCache
     /// Query and use the data on the server.
+    @available(*, deprecated, renamed: "remoteOnly")
     case useOnline
 
     // MARK: - Internal
@@ -19,9 +25,9 @@ public enum CachePolicy {
     /// Converts `Self` to the matching AWS `CachePolicy`.
     func toAWSCachePolicy() -> AWSAppSync.CachePolicy {
         switch self {
-        case .useCache:
+        case .useCache, .cacheOnly:
             return AWSAppSync.CachePolicy.returnCacheDataDontFetch
-        case .useOnline:
+        case .useOnline, .remoteOnly:
             return AWSAppSync.CachePolicy.fetchIgnoringCacheData
         }
     }

@@ -13,6 +13,9 @@
 		8427D06723F2147F008CD785 /* PlatformOperationConditionResult+ErrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8427D06623F2147F008CD785 /* PlatformOperationConditionResult+ErrorTests.swift */; };
 		8427D06923F215C5008CD785 /* CachePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8427D06823F215C5008CD785 /* CachePolicyTests.swift */; };
 		843F24642421E39700931981 /* MockPlatformOperationQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843F24632421E39700931981 /* MockPlatformOperationQueue.swift */; };
+		84770AD724CFF5CF00FC8C8D /* XCTest+Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84770AD624CFF5CF00FC8C8D /* XCTest+Utility.swift */; };
+		84770ADA24CFF63A00FC8C8D /* DataFactoryNamespace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84770AD924CFF63A00FC8C8D /* DataFactoryNamespace.swift */; };
+		84770ADC24CFF65300FC8C8D /* DataFactory+TestUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84770ADB24CFF65300FC8C8D /* DataFactory+TestUtility.swift */; };
 		84AA4D1723F2066B00D5721A /* PlatformMutationOperationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AA4D1623F2066B00D5721A /* PlatformMutationOperationTests.swift */; };
 		84AA4D1A23F206A500D5721A /* SudoLogging+Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AA4D1923F206A500D5721A /* SudoLogging+Tests.swift */; };
 		84AA4D1D23F206CD00D5721A /* MockAWSNetworkTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AA4D1C23F206CD00D5721A /* MockAWSNetworkTransport.swift */; };
@@ -62,6 +65,9 @@
 		8427D06623F2147F008CD785 /* PlatformOperationConditionResult+ErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PlatformOperationConditionResult+ErrorTests.swift"; sourceTree = "<group>"; };
 		8427D06823F215C5008CD785 /* CachePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachePolicyTests.swift; sourceTree = "<group>"; };
 		843F24632421E39700931981 /* MockPlatformOperationQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPlatformOperationQueue.swift; sourceTree = "<group>"; };
+		84770AD624CFF5CF00FC8C8D /* XCTest+Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTest+Utility.swift"; sourceTree = "<group>"; };
+		84770AD924CFF63A00FC8C8D /* DataFactoryNamespace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataFactoryNamespace.swift; sourceTree = "<group>"; };
+		84770ADB24CFF65300FC8C8D /* DataFactory+TestUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DataFactory+TestUtility.swift"; sourceTree = "<group>"; };
 		84AA4D1623F2066B00D5721A /* PlatformMutationOperationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformMutationOperationTests.swift; sourceTree = "<group>"; };
 		84AA4D1923F206A500D5721A /* SudoLogging+Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SudoLogging+Tests.swift"; sourceTree = "<group>"; };
 		84AA4D1C23F206CD00D5721A /* MockAWSNetworkTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockAWSNetworkTransport.swift; sourceTree = "<group>"; };
@@ -124,6 +130,8 @@
 			isa = PBXGroup;
 			children = (
 				84AA4D2623F207CF00D5721A /* AnyError.swift */,
+				84770AD924CFF63A00FC8C8D /* DataFactoryNamespace.swift */,
+				84770ADB24CFF65300FC8C8D /* DataFactory+TestUtility.swift */,
 			);
 			path = Util;
 			sourceTree = "<group>";
@@ -206,6 +214,7 @@
 			children = (
 				84AA4D1923F206A500D5721A /* SudoLogging+Tests.swift */,
 				8427D06023F2110B008CD785 /* Error+Equality.swift */,
+				84770AD624CFF5CF00FC8C8D /* XCTest+Utility.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -611,8 +620,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84770ADC24CFF65300FC8C8D /* DataFactory+TestUtility.swift in Sources */,
 				8427D06723F2147F008CD785 /* PlatformOperationConditionResult+ErrorTests.swift in Sources */,
 				8427D06323F21415008CD785 /* AnyError.swift in Sources */,
+				84770AD724CFF5CF00FC8C8D /* XCTest+Utility.swift in Sources */,
 				84AA4D3323F2093600D5721A /* PlatformBlockObserverTests.swift in Sources */,
 				8427D06923F215C5008CD785 /* CachePolicyTests.swift in Sources */,
 				84AA4D2323F2075D00D5721A /* PlatformOperationTests.swift in Sources */,
@@ -626,6 +637,7 @@
 				84AA4D3623F2097D00D5721A /* SudoPlatformErrorTests.swift in Sources */,
 				8427D05F23F20DCA008CD785 /* PlatformOperationQueueTests.swift in Sources */,
 				843F24642421E39700931981 /* MockPlatformOperationQueue.swift in Sources */,
+				84770ADA24CFF63A00FC8C8D /* DataFactoryNamespace.swift in Sources */,
 				84AA4D1F23F2070200D5721A /* MockGraphQL.swift in Sources */,
 				84AA4D2B23F2084B00D5721A /* MockPlatformOperation.swift in Sources */,
 				84AA4D2523F2078D00D5721A /* MockOperations.swift in Sources */,
