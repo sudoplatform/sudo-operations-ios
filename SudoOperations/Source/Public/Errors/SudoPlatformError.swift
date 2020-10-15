@@ -18,6 +18,8 @@ import AWSAppSync
 /// - accountLockedError: Returned when an operation fails because the user's account is locked.
 /// - identityInsufficient: Returned when an operation fails because the user's level of identity verification is insufficient.
 /// - identityNotVerified: Returned when an operation fails due to lack of verification.
+/// - unknownTimezone: Returned if specified time zone is not recognized.
+/// - invalidArgument: Returned if an API argument is not valid or inconsistent with other arguments.
 public enum SudoPlatformError: Error, Equatable {
     case serviceError
     case decodingError
@@ -27,6 +29,8 @@ public enum SudoPlatformError: Error, Equatable {
     case accountLockedError
     case identityInsufficient
     case identityNotVerified
+    case unknownTimezone
+    case invalidArgument(msg: String?)
     case internalError(cause: String?)
 
     public init(_ error: GraphQLError) {
@@ -51,6 +55,11 @@ public enum SudoPlatformError: Error, Equatable {
             self = .identityInsufficient
         case "sudoplatform.IdentityVerificationNotVerifiedError":
             self = .identityNotVerified
+        case "sudoplatform.UnknownTimezoneError":
+            self = .unknownTimezone
+        case "sudoplatform.invalidArgumentError":
+            let msg = error.message.isEmpty ? nil : error.message
+            self = .invalidArgument(msg: msg)
         default:
             self = .internalError(cause: "\(errorType) - \(error.message)")
         }
