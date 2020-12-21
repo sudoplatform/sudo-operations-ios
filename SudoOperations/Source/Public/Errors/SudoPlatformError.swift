@@ -21,17 +21,19 @@ import AWSAppSync
 /// - unknownTimezone: Returned if specified time zone is not recognized.
 /// - invalidArgument: Returned if an API argument is not valid or inconsistent with other arguments.
 public enum SudoPlatformError: Error, Equatable {
-    case serviceError
+    case accountLockedError
     case decodingError
     case environmentError
-    case policyFailed
-    case invalidTokenError
-    case accountLockedError
     case identityInsufficient
     case identityNotVerified
-    case unknownTimezone
-    case invalidArgument(msg: String?)
+    case insufficientEntitlementsError
     case internalError(cause: String?)
+    case invalidArgument(msg: String?)
+    case invalidTokenError
+    case noEntitlementsError
+    case policyFailed
+    case serviceError
+    case unknownTimezone
 
     public init(_ error: GraphQLError) {
         guard let errorType = error["errorType"] as? String else {
@@ -39,27 +41,31 @@ public enum SudoPlatformError: Error, Equatable {
             return
         }
         switch errorType {
-        case "sudoplatform.ServiceError":
-            self = .serviceError
+        case "sudoplatform.AccountLockedError":
+            self = .accountLockedError
         case "sudoplatform.DecodingError":
             self = .decodingError
         case "sudoplatform.EnvironmentError":
             self = .environmentError
-        case "sudoplatform.PolicyFailed":
-            self = .policyFailed
-        case "sudoplatform.InvalidTokenError":
-            self = .invalidTokenError
-        case "sudoplatform.AccountLockedError":
-            self = .accountLockedError
         case "sudoplatform.IdentityVerificationInsufficientError":
             self = .identityInsufficient
         case "sudoplatform.IdentityVerificationNotVerifiedError":
             self = .identityNotVerified
-        case "sudoplatform.UnknownTimezoneError":
-            self = .unknownTimezone
+        case "sudoplatform.InsufficientEntitlementsError":
+            self = .insufficientEntitlementsError
         case "sudoplatform.invalidArgumentError":
             let msg = error.message.isEmpty ? nil : error.message
             self = .invalidArgument(msg: msg)
+        case "sudoplatform.InvalidTokenError":
+            self = .invalidTokenError
+        case "sudoplatform.NoEntitlementsError":
+            self = .noEntitlementsError
+        case "sudoplatform.PolicyFailed":
+            self = .policyFailed
+        case "sudoplatform.ServiceError":
+            self = .serviceError
+        case "sudoplatform.UnknownTimezoneError":
+            self = .unknownTimezone
         default:
             self = .internalError(cause: "\(errorType) - \(error.message)")
         }
