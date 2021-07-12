@@ -7,6 +7,7 @@
 import Foundation
 import AWSAppSync
 import SudoLogging
+import SudoApiClient
 
 /// Queue to handle the result events from AWS.
 private let dispatchQueue = DispatchQueue(label: "com.sudoplatform.mutation-result-handler-queue")
@@ -31,8 +32,8 @@ open class PlatformMutationOperation<Mutation: GraphQLMutation>: PlatformOperati
     /// Mutation performed by the operation.
     public let mutation: Mutation
 
-    /// AppSync client instance to perform the mutation, as well as optimistic cleanup.
-    private unowned let appSyncClient: AWSAppSyncClient
+    /// GraphQL client instance to perform the mutation, as well as optimistic cleanup.
+    private unowned let graphQLClient: SudoApiClient
 
     /// Function used to perform service context specific error transformation of the mutation result for a service specific error.
     private let serviceErrorTransformations: [ServiceErrorTransformationCompletion]?
@@ -49,14 +50,14 @@ open class PlatformMutationOperation<Mutation: GraphQLMutation>: PlatformOperati
 
     /// Initialize a Platform Mutation operation.
     public init(
-        appSyncClient: AWSAppSyncClient,
+        graphQLClient: SudoApiClient,
         serviceErrorTransformations: [ServiceErrorTransformationCompletion]? = nil,
         mutation: Mutation,
         optimisticUpdate: OptimisticResponseBlock? = nil,
         optimisticCleanup: OptimisticCleanupBlock? = nil,
         logger: Logger
     ) {
-        self.appSyncClient = appSyncClient
+        self.graphQLClient = graphQLClient
         self.serviceErrorTransformations = serviceErrorTransformations
         self.mutation = mutation
         self.optimisticUpdate = optimisticUpdate
@@ -67,35 +68,38 @@ open class PlatformMutationOperation<Mutation: GraphQLMutation>: PlatformOperati
     // MARK: - Overrides
 
     open override func execute() {
-        _ = appSyncClient.perform(
-            mutation: mutation,
-            queue: dispatchQueue,
-            optimisticUpdate: optimisticUpdate,
-            conflictResolutionBlock: nil,
-            resultHandler: { [weak self] (mutationResult, error) in
-                guard let self = self else {
-                    return
-                }
-                if let error = error {
-                    self.finishWithError(error)
-                    return
-                }
-                if let errors = mutationResult?.errors, let error = errors.first {
-                    if let serviceErrorTransformations = self.serviceErrorTransformations,
-                        let serviceError = serviceErrorTransformations.compactMap({$0(error)}).first {
-                        self.finishWithError(serviceError)
-                        return
-                    } else {
-                        self.finishWithError(SudoPlatformError(error))
+        do {
+            try self.graphQLClient.perform(
+                mutation: mutation,
+                queue: dispatchQueue,
+                optimisticUpdate: optimisticUpdate,
+                resultHandler: { [weak self] (mutationResult, error) in
+                    guard let self = self else {
                         return
                     }
+                    if let error = error {
+                        switch error {
+                        case ApiOperationError.graphQLError(let cause):
+                            if let serviceErrorTransformations = self.serviceErrorTransformations,
+                               let serviceError = serviceErrorTransformations.compactMap({$0(cause)}).first {
+                                self.finishWithError(serviceError)
+                            } else {
+                                self.finishWithError(SudoPlatformError(cause))
+                            }
+                        default:
+                            self.finishWithError(error)
+                        }
+                        return
+                    }
+                    if let optimisticCleanup = self.optimisticCleanup {
+                        _ = self.graphQLClient.getAppSyncClient().store?.withinReadWriteTransaction(optimisticCleanup)
+                    }
+                    self.result = mutationResult?.data
+                    self.finish()
                 }
-                if let optimisticCleanup = self.optimisticCleanup {
-                    _ = self.appSyncClient.store?.withinReadWriteTransaction(optimisticCleanup)
-                }
-                self.result = mutationResult?.data
-                self.finish()
-            }
-        )
+            )
+        } catch {
+            self.finishWithError(error)
+        }
     }
 }

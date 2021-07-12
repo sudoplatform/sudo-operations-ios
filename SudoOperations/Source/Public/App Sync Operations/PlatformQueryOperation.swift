@@ -7,6 +7,7 @@
 import Foundation
 import AWSAppSync
 import SudoLogging
+import SudoApiClient
 
 /// Queue to handle the result events from AWS.
 private let dispatchQueue = DispatchQueue(label: "com.sudoplatform.query-result-handler-queue")
@@ -28,8 +29,8 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
     /// Cache Policy of the operation.
     public let cachePolicy: CachePolicy
 
-    /// AppSync client instance to perform the query.
-    private unowned let appSyncClient: AWSAppSyncClient
+    /// GraphQL client instance to perform the query.
+    private unowned let graphQLClient: SudoApiClient
 
     /// Function used to perform service context specific error transformation of the mutation result for a service specific error.
     private let serviceErrorTransformations: [ServiceErrorTransformationCompletion]?
@@ -38,13 +39,13 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
 
     /// Initialize a PlatformQueryOperation.
     public init(
-        appSyncClient: AWSAppSyncClient,
+        graphQLClient: SudoApiClient,
         serviceErrorTransformations: [ServiceErrorTransformationCompletion]? = nil,
         query: Query,
         cachePolicy: CachePolicy,
         logger: Logger
     ) {
-        self.appSyncClient = appSyncClient
+        self.graphQLClient = graphQLClient
         self.serviceErrorTransformations = serviceErrorTransformations
         self.query = query
         self.cachePolicy = cachePolicy
@@ -55,27 +56,35 @@ open class PlatformQueryOperation<Query: GraphQLQuery>: PlatformOperation {
 
     open override func execute() {
         let cachePolicy = self.cachePolicy.toAWSCachePolicy()
-        appSyncClient.fetch(query: query, cachePolicy: cachePolicy, queue: dispatchQueue) { [weak self] (queryResult, error) in
-            guard let self = self else {
-                return
-            }
-            if let error = error {
-                self.finishWithError(error)
-                return
-            }
-            if let errors = queryResult?.errors, let error = errors.first {
-                if let serviceErrorTransformations = self.serviceErrorTransformations,
-                    let serviceError = serviceErrorTransformations.compactMap({$0(error)}).first {
-                    self.finishWithError(serviceError)
-                    return
-                } else {
-                    self.finishWithError(SudoPlatformError(error))
-                    return
+        do {
+            try self.graphQLClient.fetch(
+                query: query,
+                cachePolicy: cachePolicy,
+                queue: dispatchQueue,
+                resultHandler: { [weak self] (queryResult, error) in
+                    guard let self = self else {
+                        return
+                    }
+                    if let error = error {
+                        switch error {
+                        case ApiOperationError.graphQLError(let cause):
+                            if let serviceErrorTransformations = self.serviceErrorTransformations,
+                               let serviceError = serviceErrorTransformations.compactMap({$0(cause)}).first {
+                                self.finishWithError(serviceError)
+                            } else {
+                                self.finishWithError(SudoPlatformError(cause))
+                            }
+                        default:
+                            self.finishWithError(error)
+                        }
+                        return
+                    }
+                    self.result = queryResult?.data
+                    self.finish()
                 }
-            }
-
-            self.result = queryResult?.data
-            self.finish()
+            )
+        } catch {
+            self.finishWithError(error)
         }
     }
 
