@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name                  = 'SudoOperations'
-  spec.version               = '5.0.0'
+  spec.version               = '6.0.0'
   spec.author                = { 'Sudo Platform Engineering' => 'sudoplatform-engineering@anonyome.com' }
   spec.homepage              = 'https://sudoplatform.com'
   spec.summary               = 'Operations SDK for the Sudo Platform by Anonyome Labs.'
@@ -12,6 +12,6 @@ Pod::Spec.new do |spec|
   spec.swift_version         = '5.0'
 
   spec.dependency 'SudoLogging', '~> 0.3'
-  spec.dependency 'SudoApiClient', '~> 6.0'
+  spec.dependency 'SudoApiClient', '~> 7.0'
   spec.dependency 'AWSAppSync', '~> 3.2'
 end
