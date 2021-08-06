@@ -53,7 +53,7 @@ public enum SudoPlatformError: Error, Equatable {
             self = .identityNotVerified
         case "sudoplatform.InsufficientEntitlementsError":
             self = .insufficientEntitlementsError
-        case "sudoplatform.invalidArgumentError":
+        case "sudoplatform.InvalidArgumentError":
             let msg = error.message.isEmpty ? nil : error.message
             self = .invalidArgument(msg: msg)
         case "sudoplatform.InvalidTokenError":
